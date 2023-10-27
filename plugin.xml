@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Sample Category"
+            id="testppupGenerator">
+      </category>
+      <view
+            id="testppupGenerator.views.SampleView"
+            name="Sample View"
+            icon="icons/sample.png"
+            class="testppupGenerator.views.SampleView"
+            category="testppupGenerator"
+            inject="true">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="testppupGenerator.views.SampleView"
+               relative="org.eclipse.ui.views.ProblemView"
+               relationship="right"
+               ratio="0.5">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="testppupGenerator.views.SampleView"
+            id="getPrompts"
+            name="Get list of prompts">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+   
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+         
+               
+            <command
+                  commandId="getPrompts"
+                  icon="icons/sample.png"
+                  label="Generate prompts"
+                  style="push">
+            </command>
+         
+      </menuContribution>
+   </extension>
+
+</plugin>
