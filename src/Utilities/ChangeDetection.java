@@ -144,7 +144,8 @@ public class ChangeDetection {
 				
 		*/
 		/* Papyrus end */
-	/*	ArrayList<String> subclasses1 = new ArrayList<String>();
+		/* Pivot starts */
+		ArrayList<String> subclasses1 = new ArrayList<String>();
 		subclasses1.add("NamedElement");
 		
 		PullProperty pp1 = new PullProperty("ownedAnnotation", "Element", subclasses1);
@@ -598,7 +599,8 @@ public class ChangeDetection {
 		changes.add(ast30);
 		changes.add(ast31);
 		changes.add(ast32);
-*/
+
+		/* Pivot ends */
 		//RenameClass renameClass3 = new RenameClass("Person","Contact","???"); 
 		//RenameClass renameClass1 = new RenameClass("Loc","Address","???"); 
 		//RenameProperty renameProperty1 = new RenameProperty("lower","lowertoto","CollectionType"); 
@@ -734,19 +736,19 @@ public class ChangeDetection {
 		
 	//	changes.add(setProperty2);
 		
-	/* Modisco	*/
-		RenameProperty rp1 = new RenameProperty("discoveryError", "discoveryErrors", "Discovery");		
+	/* Modisco starts	*/
+	/*	RenameProperty rp1 = new RenameProperty("discoveryError", "discoveryErrors", "Discovery");		
 		RenameProperty rp2 = new RenameProperty("dicoveryDate", "discoveryDate", "Discovery");
 		RenameProperty rp3 = new RenameProperty("totalExecutionTimeInSeconds", "discoveryTimeInSeconds", "Discovery");
 		RenameProperty rp4 = new RenameProperty("averageSaveTimeInSeconds", "saveTimeAverageInSeconds", "AveragedProjectDiscovery");
 		RenameProperty rp5 = new RenameProperty("averageExecutionTimeInSeconds", "discoveryTimeAverageInSeconds", "AveragedProjectDiscovery");
 		
-		/*changes.add(rp1);
+		changes.add(rp1);
 		changes.add(rp2);
 		changes.add(rp3);
 		changes.add(rp4);
 		changes.add(rp5);
-		*/
+		
 		ArrayList<ComplexChange> moves = new ArrayList<ComplexChange>();
 		
 		MoveProperty mp1 = new MoveProperty("discoveryDate", "Discovery", "DiscoveryIteration");//after its rename
@@ -772,18 +774,18 @@ public class ChangeDetection {
 		
 		ExtractClass ec = new ExtractClass("EC", "Discovery", "DiscoveryIteration", null, moves);
 		
-		//changes.add(ec);
+		changes.add(ec);
 		
 		MoveProperty mp6 = new MoveProperty("saveTimeStandardDeviation", "AveragedProjectDiscovery", "ProjectDiscovery");
 		MoveProperty mp7 = new MoveProperty("executionTimeStandardDeviation", "AveragedProjectDiscovery", "ProjectDiscovery");
 		MoveProperty mp8 = new MoveProperty("saveTimeAverageInSeconds", "AveragedProjectDiscovery", "ProjectDiscovery");//after its rename
 		MoveProperty mp9 = new MoveProperty("discoveryTimeAverageInSeconds", "AveragedProjectDiscovery", "ProjectDiscovery");//after its rename
 		
-		/*changes.add(mp6);
+		changes.add(mp6);
 		changes.add(mp7);
 		changes.add(mp8);
 		changes.add(mp9);
-		*/
+		
 		ArrayList<String> subclasses = new ArrayList<String>();
 		subclasses.add("ProjectDiscovery");
 		
@@ -792,11 +794,11 @@ public class ChangeDetection {
 		PullProperty pp3 = new PullProperty("saveTimeAverageInSeconds", "Discovery", subclasses);
 		PullProperty pp4 = new PullProperty("discoveryTimeAverageInSeconds", "Discovery", subclasses);
 		
-		/*changes.add(pp1);
+		changes.add(pp1);
 		changes.add(pp2);
 		changes.add(pp3);
 		changes.add(pp4);
-		*/
+		
 		ArrayList<ComplexChange> pulls = new ArrayList<ComplexChange>();
 		
 		ArrayList<String> subclasses1 = new ArrayList<String>();
@@ -827,10 +829,10 @@ public class ChangeDetection {
 		DeleteProperty dp2 = new DeleteProperty("metaModelVariant", "Discovery");
 		DeleteProperty dp3 = new DeleteProperty("algorithmVariant", "Discovery");
 		
-	/*	changes.add(dp1);
+		changes.add(dp1);
 		changes.add(dp2);
 		changes.add(dp3);
-	*/	
+		
 		DeleteClass dc1 = new DeleteClass("AveragedProjectDiscovery");
 		DeleteClass dc2 = new DeleteClass("AveragedMultiDiscoveryBenchmark");
 		DeleteClass dc3 = new DeleteClass("DiscoveredProject");
@@ -851,12 +853,12 @@ public class ChangeDetection {
 		DeleteSuperType dst4 = new DeleteSuperType("DiscoveredProject", "Project");
 		DeleteSuperType dst5 = new DeleteSuperType("AveragedMultiDiscoveryBenchmark", "Benchmark");
 		
-		/*changes.add(dst1);
+		changes.add(dst1);
 		changes.add(dst2);
 		changes.add(dst3);
 		changes.add(dst4);
 		changes.add(dst5);
-		*/
+		
 		
 		AddClass ac1 = new AddClass("DiscoveryIteration");
 		AddClass ac2 = new AddClass("Resource");
@@ -865,25 +867,25 @@ public class ChangeDetection {
 		AddClass ac5 = new AddClass("EventType");
 		AddClass ac6 = new AddClass("Event");
 		AddClass ac7 = new AddClass("MemoryMeasurement");
-		
-	/*	changes.add(ac1);
+	
+		changes.add(ac1);
 		changes.add(ac2);
 		changes.add(ac3);
 		changes.add(ac4);
 		changes.add(ac5);
 		changes.add(ac6);
 		changes.add(ac7);
-	*/	
+		
 		AddSuperType ast1 = new AddSuperType("BeginEvent", "Event");
 		AddSuperType ast2 = new AddSuperType("MemoryMeasurement", "Event");
 		AddSuperType ast3 = new AddSuperType("EndEvent", "Event");
 		AddSuperType ast4 = new AddSuperType("Project", "Resource");
 		
-		/*changes.add(ast1);
+		changes.add(ast1);
 		changes.add(ast2);
 		changes.add(ast3);
 		changes.add(ast4);
-		*/
+		
 		AddProperty ap1 = new AddProperty("memoryUsed", "MemoryMeasurement");
 		AddProperty ap2 = new AddProperty("name", "EventType");
 		AddProperty ap3 = new AddProperty("eventType", "Event");
@@ -896,7 +898,7 @@ public class ChangeDetection {
 		AddProperty ap10 = new AddProperty("memoryMeasurements", "DiscoveryIteration");
 		AddProperty ap11 = new AddProperty("events", "DiscoveryIteration");
 		
-	/*	changes.add(ap1);
+		changes.add(ap1);
 		changes.add(ap2);
 		changes.add(ap3);
 		changes.add(ap4);
@@ -908,7 +910,7 @@ public class ChangeDetection {
 		changes.add(ap10);
 		changes.add(ap11);
 */
-		
+		/* Modisco ends */
 		
 		return changes;
 	}

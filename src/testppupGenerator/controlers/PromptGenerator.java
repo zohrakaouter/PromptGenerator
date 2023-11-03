@@ -94,12 +94,10 @@ import testppupGenerator.model.Prompt;
 public class PromptGenerator {
 	public static ArrayList<Usage> sortMarkerList(CompilationUnit cu, ArrayList<IMarker> ml,
 			ArrayList<Change> myChanges) {
-		ArrayList<IMarker> sorted = new ArrayList<IMarker>();
+
 		ArrayList<Usage> usages = new ArrayList<Usage>();
 		ArrayList<Usage> nullusages = new ArrayList<Usage>();
-		ArrayList<IMarker> nullPattern = new ArrayList<IMarker>();
 
-		boolean out = false;
 
 		for (IMarker m : ml) {
 
@@ -261,17 +259,17 @@ public class PromptGenerator {
 			System.out.println("exception occurred" + e);
 		}
 	}
-	public static String formatMarker(IMarker marker, CompilationUnit cu)
+	public static String formatMarker(IMarker marker, CompilationUnit cu, ICompilationUnit iCompilationUnit)
 	{
 		String formattedMarker="";
 		ASTNode errornode = ASTManager.getErrorNode(cu, marker);
 		if(errornode instanceof SimpleName)
 		{
-			formattedMarker= "Error : "+((SimpleName)errornode).getIdentifier()+ " Line : "+marker.getAttribute(IMarker.LINE_NUMBER, 0);
+			formattedMarker= "Error : "+((SimpleName)errornode).getIdentifier()+"CU : " +iCompilationUnit.getElementName()+ " Line : "+marker.getAttribute(IMarker.LINE_NUMBER, 0);
 		}
 		else if (errornode instanceof QualifiedName)
 		{
-			formattedMarker= "Error : "+ASTManager.getSNFromQF(errornode).getIdentifier()+ " Line : "+marker.getAttribute(IMarker.LINE_NUMBER, 0);	
+			formattedMarker= "Error : "+ASTManager.getSNFromQF(errornode).getIdentifier()+"CU : " +iCompilationUnit.getElementName()+" Line : "+marker.getAttribute(IMarker.LINE_NUMBER, 0);	
 		}
 		else 
 			System.out.println(" not treated situation in formatting marker, its type  "+ errornode.toString());
@@ -304,8 +302,8 @@ public class PromptGenerator {
 			CompilationUnit compilUnit = ASTManager.getCompilationUnit(iCompilUnit);
 
 			ArrayList<IMarker> ml = new ArrayList<IMarker>();
-		
-	
+
+
 			try {
 
 				ml = ErrorsRetriever.findJavaProblemMarkers(iCompilUnit);
@@ -314,11 +312,11 @@ public class PromptGenerator {
 					for(IMarker marker : ml)
 					{
 
-						System.out.println(" the correspondant marker  "+ formatMarker(marker, compilUnit));
+						System.out.println(" the correspondant marker  "+ formatMarker(marker, compilUnit,iCompilUnit));
 						prompt=new Prompt();
 
 						prompt=	generatePrompt(myChanges,marker,compilUnit);
-						prompt.setMarker(formatMarker(marker, compilUnit));
+						prompt.setMarker(formatMarker(marker, compilUnit,iCompilUnit));
 						//	ResultSaver.run(prompt,pw);
 						//	code =getCodePart(compilUnit, marker);
 						if (!prompt.getRequest().isEmpty())
@@ -336,7 +334,7 @@ public class PromptGenerator {
 								response=	ChatGPT.chatGPT(prompt.getRequest(), 0.2);//+code );
 							}catch (Exception e) {
 								// TODO: handle exception
-								response= " Cannot get a response because of an exception";
+								response= e.getMessage();
 							}
 							if(response.isEmpty())
 							{
@@ -367,6 +365,8 @@ public class PromptGenerator {
 						else {
 							System.out.println( " Cannot generate a prompt , empty request ");
 							prompt.setRequest("Cannot generate a prompt");
+							appendStrToFile("/home/zkebaili/eclipse-workspace/PromptGenerator/outputModisco/ressfile"+02+".csv",cpt+","+prompt.toString()+","+"Cannot generate a prompt");//+//code.trim().replace('\n',' ').replace('\r',' ').replace(",", "").replace(";", "")+","+response.replace("\n","").replace("\r","").replace(";", "").replace(",", "")+"\n");
+							
 						}
 					}
 				}
@@ -386,9 +386,16 @@ public class PromptGenerator {
 		System.out.println("Execution time in nanoseconds: " + timeElapsed);
 		System.out.println("Execution time in milliseconds: " + timeElapsed / 1000000);
 		System.out.println("Execution time in minutes: " + timeElapsed / 1000000000/60);
-		
+
 	}
 
+	public static String getMethodCode(CompilationUnit compilUnit,IMarker marker, String state)
+	{
+		String code ="";
+		ASTNode errornode = ASTManager.getErrorNode(compilUnit, marker);
+		code = ASTManager.findMethodDeclaration(errornode).toString();
+		return code;
+	}
 
 	public static String getCodePart(CompilationUnit compilUnit,IMarker marker, String state)
 	{
@@ -400,23 +407,23 @@ public class PromptGenerator {
 			if( ASTManager.findStatement(errornode)!=null)
 			{
 
-				code= " Coevolve this code : "+((Statement) ASTManager.findStatement(errornode)).toString();
+				code= " Coevolve this java code snippet: "+((Statement) ASTManager.findStatement(errornode)).toString();
 			}
 			else if (ASTManager.findMethodDeclaration(errornode)!=null)
 			{
-				code =" Here is a method signature : "+((MethodDeclaration)ASTManager.findMethodDeclaration(errornode)).toString().split("\\{")[0] + " Coevolve it according to the described change.";
+				code =" Here is a java method signature : "+((MethodDeclaration)ASTManager.findMethodDeclaration(errornode)).toString().split("\\{")[0] + " Coevolve it according to the described change.";
 				//	System.out.println(" The got string after SPLIT is " +code);
 
 			}
 			else if (ASTManager.findTypeDeclaration(errornode)!=null)
 			{
-				code= " Coevolve this code : "+ ASTManager.findTypeDeclaration(errornode).toString().split("\\{")[0];
+				code= " Coevolve this java code snippet : "+ ASTManager.findTypeDeclaration(errornode).toString().split("\\{")[0];
 
 			}
 			else if(ASTManager.findImportDeclaration(errornode)!=null)
 			{
 
-				code= " Coevolve this code : "+ ASTManager.findImportDeclaration(errornode).toString();
+				code= " Coevolve this java code snippet : "+ ASTManager.findImportDeclaration(errornode).toString();
 			}
 
 		}
@@ -425,19 +432,19 @@ public class PromptGenerator {
 			if(ASTManager.findImportDeclaration(errornode)!=null)
 			{
 
-				code= " Coevolve this code : "+get3Imports(compilUnit, errornode);;
+				code= " Coevolve this java code snippet : "+get3Imports(compilUnit, errornode);;
 
 			}
 			else 
 				if( ASTManager.findStatement(errornode)!=null)
 				{
 
-					code= " Coevolve this code : "+ get3Instructions(compilUnit, errornode);
+					code= " Coevolve this java code snippet : "+ get3Instructions(compilUnit, errornode);
 				}
 
 		}
 
-		return code.trim().replace('\n',' ').replace('\r',' ').replace(",", "").replace(";", " ");
+		return code; //.trim().replace('\n',' ').replace('\r',' ').replace(",", "").replace(";", " ");
 
 	}
 	public static String get3Imports(CompilationUnit cu,ASTNode impactedImport) {
@@ -545,29 +552,39 @@ public class PromptGenerator {
 					{
 						prompt.setChange("Rename class");
 						code = getCodePart(cu, error,"short");
-						request="The metaclass "+ changename+ " is renamed to "+ newname + "The class "+ changename+ " is generated " + code ;
+						//	request="The metaclass "+ changename+ " is renamed to "+ newname + "The class "+ changename+ " is generated " + code ;
+						request="The class "+ changename+ " is generated from  The metaclass which "+ changename+ " is renamed to "+ newname  + code ;
+
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("get"+changename))
 					{
 						prompt.setChange("Rename class");
 						code = getCodePart(cu, error,"short");
-						request="The metaclass "+ changename+ " is renamed to "+ newname+
-								"  the method get"+changename+" is generated and must be updated "+code ;
+						//	request="The metaclass "+ changename+ " is renamed to "+ newname+
+						//			"  the method get"+changename+" is generated and must be updated "+code ;
+						request="  the method get"+changename+" is generated and must be updated " 
+								+" The metaclass "+ changename+ " is renamed to "+ newname+ " "+code;
 
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("set"+changename))
 					{
 						prompt.setChange("Rename class");
 						code = getCodePart(cu, error,"short");
-						request="The metaclass "+ changename+ " is renamed to "+ newname+
-								"  the method set"+changename+" is generated and must be updated "+code;
+						//request="The metaclass "+ changename+ " is renamed to "+ newname+
+						//	"  the method set"+changename+" is generated and must be updated "+code;
+						request="  the method set"+changename+" is generated and must be updated " 
+								+" The metaclass "+ changename+ " is renamed to "+ newname+ " "+code;
+
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("create"+changename))
 					{
 						prompt.setChange("Rename class");
 						code = getCodePart(cu, error,"short");
-						request="The metaclass "+ changename+ " is renamed to "+ newname+
-								"  the method create"+changename+" is generated and must be updated "+code;
+						//	request="The metaclass "+ changename+ " is renamed to "+ newname+
+						//			"  the method create"+changename+" is generated and must be updated "+code;
+						request="  the method create"+changename+" is generated and must be updated " 
+								+" The metaclass "+ changename+ " is renamed to "+ newname+ " "+code;
+
 					}
 					else if(ASTManager.isLiteral(errornode))
 					{
@@ -577,13 +594,17 @@ public class PromptGenerator {
 						{
 							prompt.setChange("Rename class");
 							code = getCodePart(cu, error,"short");
-							request="The metaclass "+ changename+ " is renamed to "+ newname+
-									" the literal " +literalchangename+" is generated and must be updated"+code;
+							//request="The metaclass "+ changename+ " is renamed to "+ newname+
+							//	" the literal " +literalchangename+" is generated and must be updated"+code;
+							request=" The literal " +literalchangename+" is generated from The metaclass "+ changename+ 
+									"This metaclass called "+ changename+ " is renamed to "+ newname
+									+code;
+
 						}
 
 					}
 				}
-				if (change instanceof RenameProperty)
+				else if (change instanceof RenameProperty)
 				{
 
 					String changename=((RenameProperty)change).getName();
@@ -600,22 +621,32 @@ public class PromptGenerator {
 					{
 						prompt.setChange("Rename property");
 						code = getCodePart(cu, error,"short");
-						request="The attribute "+ changename+ " is renamed to "+ newname+
-								"  the method get"+capitalizeFirstLetter(changename)+" is generated and must be updated "+ code;
+						//request=" The attribute "+ changename+ " is renamed to "+ newname+
+						//	"  the method get"+capitalizeFirstLetter(changename)+" is generated and must be updated "+ code;
+						request="  The method get"+capitalizeFirstLetter(changename)+" is generated from "
+								+" The attribute "+ changename+ " which is renamed to "+ newname
+								+ code;
+
 					}
 					if(((SimpleName)errornode).getIdentifier().equals("set"+capitalizeFirstLetter(((RenameProperty)change).getName())))
 					{
 						prompt.setChange("Rename property");
 						code = getCodePart(cu, error,"short");
-						request="The attribute "+ changename+ " is renamed to "+ newname+
-								" the method set"+capitalizeFirstLetter(changename)+" is generated and must be updated "+code;
+						//request="The attribute "+ changename+ " is renamed to "+ newname+
+						//" the method set"+capitalizeFirstLetter(changename)+" is generated and must be updated "+code;
+						request="  The method set"+capitalizeFirstLetter(changename)+" is generated from "
+								+" The attribute "+ changename+ " which is renamed to "+ newname
+								+ code;
 					}
 					if(((SimpleName)errornode).getIdentifier().contains("get"+((RenameProperty)change).getClassName()+"_"+((RenameProperty)change).getName()))
 					{
 						prompt.setChange("Rename property");
 						code = getCodePart(cu, error,"short");
-						request="The attribute "+ changename+ " is renamed to "+ newname+
-								"  the method get"+classname+"_"+changename+" is generated and must be updated "+code;
+						//request="The attribute "+ changename+ " is renamed to "+ newname+
+						//"  the method get"+classname+"_"+changename+" is generated and must be updated "+code;
+
+						request="  The method get"+classname+"_"+changename+" is generated from  "+
+								" The attribute "+ changename+ " which is renamed to "+ newname+" "+code;
 
 					}
 
@@ -629,8 +660,11 @@ public class PromptGenerator {
 						{
 							prompt.setChange("Rename property");
 							code = getCodePart(cu, error,"short");
-							request="The class "+ changename+ " is renamed to "+ newname+
-									"  the literal " +classliteral+"__"+changeLiteral+" is generated and must be updated "+code;
+							//request="The class "+ changename+ " is renamed to "+ newname+
+							//"  the literal " +classliteral+"__"+changeLiteral+" is generated and must be updated "+code;
+							request="  The literal " +classliteral+"__"+changeLiteral+" is generated from "+
+									" The class "+ changename+ " which is renamed to "+ newname+" "+code;
+
 						}
 
 					}
@@ -642,14 +676,14 @@ public class PromptGenerator {
 						RenameProperty rp=((RenameProperty)change);
 						if(errorid.equals(rp.getClassName().toLowerCase()+rp.getName().toLowerCase()))
 						{
-							System.out.println(" not treated case "+error);
+							request=" not treated case ";
 						}
 
 					}
 
 
 				}
-				if(change instanceof MoveProperty)
+				else if(change instanceof MoveProperty)
 				{
 
 
@@ -710,7 +744,7 @@ public class PromptGenerator {
 						System.out.println(" not treated case 2");
 					}
 				}
-				if( change instanceof PushProperty)
+				else if( change instanceof PushProperty)
 				{
 
 
@@ -732,8 +766,9 @@ public class PromptGenerator {
 					{
 						if(subclasses.size()>1)
 						{
-							prompt.setChange("Push class");
-							code = getCodePart(cu, error,"short");
+							prompt.setChange("Push property");
+							//code = getCodePart(cu, error,"short");
+							
 							request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString+ " "+ code;
 
 						}
@@ -741,7 +776,8 @@ public class PromptGenerator {
 						{
 							prompt.setChange("Push class");
 							code = getCodePart(cu, error,"short");
-							request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)+" "+code;
+							request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)+" "
+							+code;
 						}
 					}
 					if(((SimpleName)errornode).getIdentifier().equals("get"+capitalizeFirstLetter(((PushProperty)change).getName())) ||((SimpleName)errornode).getIdentifier().equals("is"+capitalizeFirstLetter(((PushProperty)change).getName())) )
@@ -749,10 +785,26 @@ public class PromptGenerator {
 						prompt.setChange("Push class");
 						code = getCodePart(cu, error,"short");
 						if(subclasses.size()>1)
-							request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
-							+" The method get"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
-						else request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)
-						+" The method get"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+
+							//request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
+							//+" The method get"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+							request=" The method get"+capitalizeFirstLetter(property)+" is generated from the attribute "+property+
+
+							"This attribute is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
+
+							//+code;
+							+ " Coevolve this java code snippet "+getMethodCode(cu, error, "short");
+
+						else 
+							//request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)
+						//+" The method get"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+
+							request=" The method get"+capitalizeFirstLetter(property)+" is generated from the attribute "+property+
+
+							"This attribute is pushed from the super class"+superclass+ " to the subclasse : "+subclasses.get(0)
+
+							//+code;
+							+ " Coevolve this java code snippet "+getMethodCode(cu, error, "short");
 
 
 
@@ -761,11 +813,26 @@ public class PromptGenerator {
 					{
 						prompt.setChange("Push class");
 						code = getCodePart(cu, error,"short");
+						
 						if(subclasses.size()>1)
-							request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
-							+" The method set"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
-						else request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)
-						+" The method set"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+							//request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
+							//+" The method set"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+							request=" The method set"+capitalizeFirstLetter(property)+" is generated from the attribute "+property+
+
+							"This attribute is pushed from the super class"+superclass+ " to the subclasses : "+subclassesString
+
+							//+code;
+							+ " Coevolve this java code snippet "+getMethodCode(cu, error, "short");
+
+							else 
+								//request= "The attribute "+property+ " is pushed from the super class"+superclass+ " to the subclass : "+subclasses.get(0)
+					//	+" The method set"+capitalizeFirstLetter(property)+" is generated and must be updated "+code;
+								request=" The method set"+capitalizeFirstLetter(property)+" is generated from the attribute "+property+
+
+								"This attribute is pushed from the super class"+superclass+ " to the subclasse : "+subclasses.get(0)
+
+								//+code;
+								+ " Coevolve this java code snippet "+getMethodCode(cu, error, "short");
 
 					}
 					if(ASTManager.isLiteral(errornode)&& ((SimpleName)errornode).getIdentifier().equals(ASTManager.makeLiteral(((PushProperty)change).getSuperClassName())+"__"+(ASTManager.makeLiteral(((PushProperty)change).getName()))))
@@ -782,7 +849,7 @@ public class PromptGenerator {
 					}
 
 				}
-				if(change instanceof DeleteClass)
+				else	if(change instanceof DeleteClass)
 				{
 
 
@@ -792,7 +859,7 @@ public class PromptGenerator {
 					{
 						prompt.setChange("Delete Class ");
 						code = getCodePart(cu, error,"short");
-						request="Here is a change : the metaclass "+ changename+ " is deleted The class "+changename + " is generated and it must be deleted "+code ;
+						request="Considering a metaclass in a metamodel called "+ changename+ " The class " +changename +" is generated from this metaclass. Here is a change: the metaclass "+ changename+" is removed with all the generated classes and properties are removed. "+code +" Give me the updated code without any explanations." ;
 
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("get"+changename))
@@ -800,7 +867,7 @@ public class PromptGenerator {
 						prompt.setChange("Delete Class ");
 						code = getCodePart(cu, error,"short");
 						request="The metaclass "+ changename+ " is deleted "+
-								"  the method get"+changename+" is generated and its usage must be deleted "+code + " If there is any instruction to delete, please comment it with significant message ";
+								"  the method get"+changename+" is generated and its usage must be deleted "+code + " If there is any instruction to delete please just comment it.";
 
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("set"+changename))
@@ -808,7 +875,7 @@ public class PromptGenerator {
 						prompt.setChange("Delete Class ");
 						code = getCodePart(cu, error,"short");
 						request="The metaclass "+ changename+ " is deleted "+
-								" the method set"+changename+" is generated and its usage must be deleted "+ code+ " If there is any instruction to delete, please comment it with significant message ";
+								" the method set"+changename+" is generated and its usage must be deleted "+ code+ " If there is any instruction to delete please comment it with significant message ";
 					}
 					else if(((SimpleName)errornode).getIdentifier().equals("create"+changename))
 					{
@@ -820,7 +887,7 @@ public class PromptGenerator {
 					else if(ASTManager.isLiteral(errornode))
 					{
 						String nodename=((SimpleName)errornode).getIdentifier();
-						String literalchangename=ASTManager.makeLiteral(((RenameClass) change).getName());
+						String literalchangename=ASTManager.makeLiteral(((DeleteClass) change).getName());
 						if(nodename.contains(literalchangename))
 						{
 							prompt.setChange("Delete Class ");
@@ -832,7 +899,7 @@ public class PromptGenerator {
 					}
 
 				}
-				if(change instanceof DeleteProperty)
+				else if(change instanceof DeleteProperty)
 				{
 
 					String changename=((DeleteProperty)change).getName();
@@ -907,7 +974,7 @@ public class PromptGenerator {
 					}
 
 				}
-				if( change instanceof ExtractClass)
+				else if( change instanceof ExtractClass)
 				{
 
 					String sourceclassname = ((ExtractClass)change).getSourceClassName();
@@ -927,21 +994,23 @@ public class PromptGenerator {
 							if(((MoveProperty)cc).getUpperBound()==-1)
 							{
 
-								if(((SimpleName)errornode).getIdentifier().equals("get"+prop) ) {
+								if(((SimpleName)errornode).getIdentifier().equals("get"+prop) ) 
+								{
 
 									prompt.setChange("Extract property");
 
 									code = getCodePart(cu, error,"short");
-									request="The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+ reference+
-											" Considering that calling get"+ capitalizeFirstLetter(reference) +" from the class "+sourceclassname +" returns a list of "+targetclassname+ "objects "+code;
+									request="The method get"+ capitalizeFirstLetter(reference)+" is generated from the reference "+reference+ " \n Considering that calling  get"+ capitalizeFirstLetter(reference) +" from the class  "+sourceclassname +" returns a list of "+targetclassname+ " objects "
+											+ "\n The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+reference+ "  \n"+ 
+											code;
 								}
 								else if (((SimpleName)errornode).getIdentifier().equals("set"+prop))
 								{
 									prompt.setChange("Extract property");
 									code = getCodePart(cu, error,"short");
-									request="The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+ reference+
-											" Considering that calling set"+ capitalizeFirstLetter(reference) +" from the class "+sourceclassname +" returns a list of "+targetclassname+ "objects "+code;
-
+									request="The method set"+ capitalizeFirstLetter(reference)+" is generated from the reference "+reference+ " Considering that calling  set"+ capitalizeFirstLetter(reference) +" from the class  "+sourceclassname +" returns a list of "+targetclassname+ " objects "
+											+ " \n The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+reference+ " \n"+ 
+											code;
 								}
 							}
 							else
@@ -950,16 +1019,18 @@ public class PromptGenerator {
 
 									prompt.setChange("Extract property");
 									code = getCodePart(cu, error,"short");
-									request="The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+ reference+
-											" Considering that calling get"+ capitalizeFirstLetter(reference) +" from the class "+sourceclassname +" returns an instance of "+targetclassname+ "object "+code;
+									request="The method get"+ capitalizeFirstLetter(reference)+" is generated from the reference "+reference+ " Considering that calling  get"+ capitalizeFirstLetter(reference) +" from the class  "+sourceclassname +" returns an instance of "+targetclassname+ " object "
+											+ " The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+reference+ "  \n"+ 
+											code;
 
 								}
 								else if (errorsn.equals("set"+prop))
 								{
 									prompt.setChange("Extract property");
 									code = getCodePart(cu, error,"short");
-									request="The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+ reference+
-											" Considering that calling set"+ capitalizeFirstLetter(reference) +" from the class "+sourceclassname +" returns an instance of "+targetclassname+ "object "+code;
+									request="The method set"+ capitalizeFirstLetter(reference)+" is generated from the reference "+reference+ " Considering that calling  get"+ capitalizeFirstLetter(reference) +" from the class  "+sourceclassname +" returns an instance of "+targetclassname+ " object "
+											+ " \n The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference" +reference+ "\n "+ 
+											code;
 
 								}
 							}
@@ -967,7 +1038,8 @@ public class PromptGenerator {
 							{
 								prompt.setChange("Extract property");
 								code = getCodePart(cu, error,"short");
-								if(errorsn.equals(((sourceclassname.toUpperCase()+"__"+ASTManager.makeLiteral(propefter))))) {
+								if(errorsn.equals(((sourceclassname.toUpperCase()+"__"+ASTManager.makeLiteral(propefter))))) 
+								{
 
 									request="The attribute "+ propefter+ " is moved from the class "+ sourceclassname + " to the class "+ targetclassname+ " through the reference "+ reference+
 											" The literal "+errorsn +" is generated by combining the literal of the source class and the literal of the attribute  and must be updated "+code;
@@ -979,9 +1051,8 @@ public class PromptGenerator {
 
 					}
 
-
 				}
-				if( change instanceof PullProperty)
+				else if( change instanceof PullProperty)
 				{
 
 
@@ -1039,6 +1110,7 @@ public class PromptGenerator {
 
 
 				}
+				else request= " SN but Cannot be matched with any change";
 			} 
 			else if( errornode instanceof QualifiedName)
 			{
@@ -1054,8 +1126,9 @@ public class PromptGenerator {
 						code = getCodePart(cu, error,"extended");
 						request="The metaclass "+ changename+ " is deleted and the class "+ changename+ " is deleted also (assuming that when the metaclass is deleted all the generated elements are deleted )"+code + " If there is any instruction to delete, please comment it with significant message " ;
 					}
-				} else System.out.println("  in QF not treated change ");
+				} else request= " QN but Cannot be matched with any change";
 			}
+			else request= "not SN not QN Cannot be matched with any change";
 		}
 
 		prompt.setRequest(request);

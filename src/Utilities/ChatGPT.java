@@ -19,13 +19,13 @@ public class ChatGPT {
         System.out.println( "*** THE REQUEST : "+text);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Authorization", "Bearer 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");
+        con.setRequestProperty("Authorization", "Bearer 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");
 
         JSONObject data = new JSONObject();
         data.put("model","gpt-3.5-turbo"); //"text-davinci-003");
        // data.put("prompt", text);
        if(getNbTokens(text)<2000) {
-        data.put("messages", Arrays.asList( Map.of("role", "user",  "content", text),Map.of("role", "system",  "content", "Act as a developer")));//"You are a helpful self help guide that provides advice on time management")));
+        data.put("messages", Arrays.asList( Map.of("role", "user",  "content", text)));//,Map.of("role", "system",  "content", "Act as a developer")));//"You are a helpful self help guide that provides advice on time management")));
        // data.put("messages", Arrays.asList( Map.of("role", "system",  "content", "Act as a developer")));//"You are a helpful self help guide that provides advice on time management")));
         
         data.put("max_tokens", 2000);
@@ -65,13 +65,17 @@ public class ChatGPT {
   
     public static void main(String[] args) throws Exception {
       //  chatGPT("Hello, how are you?");
-    	
-    //	String text = "compute 1524*5844"+"\n";
-    	String text ="";
-    	 System.out.println( " the text before : "+ text + "followed by this");
-    	text= text.trim();
-   	 System.out.println( " the text after : "+ text + "followed by this");
-    	// System.out.println( " number of token is "+ text.toCharArray().length/4);
+    	String text ="The attribute maxUsedMemoryInBytes is moved from the class Discovery to the class DiscoveryIteration through the reference iterations Considering that calling setIterations from the class Discovery returns a list of DiscoveryIterationobjects Coevolve this java code : discovery.setMaxUsedMemoryInBytes(maxUsedMemory)";
+    			/*" The method setIterations is generated from the reference Iteration \n"
+    			+ "Considering that calling setIterations from the class Discovery returns a list of DiscoveryIteration objects .\n"
+    			+ "The attribute maxUsedMemoryInBytes is moved from the class Discovery to the class DiscoveryIteration through the reference iterations\n"
+    			+ " Coevolve this java code snippet  : discovery.setMaxUsedMemoryInBytes(maxUsedMemory)";
+    			*/
+    			//"Considering that the class  MultiProjectBenchmark is removed. Here is a method signature : private MultiProjectBenchmark buildReportModelAndDiagrams() throws CoreException IOException Coevolve it according to the described change. Give me the updated code without any explanations.";
+    
+   //	 System.out.println( " number of token is "+ text.toCharArray().length/4);
+
+    	 System.out.println( chatGPT(text, 0.2));
  //chatGPT("Considering an eclipse modeling framework ecore metamodel and considering that the attribute valueExpression is renamed to expressionInOCLin the metaclass OpaqueExpression,"
     		//+ " correct this code: public static final ExecutorProperty _OpaqueExpression__valueExpression = new ExecutorProperty(\"valueExpression\", Types._OpaqueExpression, 3, new EcoreLibraryProperty(PivotPackage.Literals.OPAQUE_EXPRESSION__VALUE_EXPRESSION));");
    // chatGPT("compute 1524*5844");

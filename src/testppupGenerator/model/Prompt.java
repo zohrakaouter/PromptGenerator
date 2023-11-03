@@ -39,7 +39,7 @@ public void setMarker(String marker) {
 }
 @Override
 public String toString() {
-	return  change + "," + marker+ "," + request.trim().replace('\n',' ').replace('\r',' ').replace(",", "") ;
+	return  change + "," + marker+ "," + request.trim().replace('\n',' ').replace('\r',' ').replace(",", " ").replace(";", " ") ;
 }
 
 
